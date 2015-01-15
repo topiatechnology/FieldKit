@@ -12,10 +12,10 @@
  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  the Software, and to permit persons to whom the Software is furnished to do so,
  subject to the following conditions:
-
+ 
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
-
+ 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -23,11 +23,19 @@
  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  
-*/
+ */
 
 #import "FKTokenField.h"
 #import "FKTokenField_Internal.h"
 #import "FKTextField+UITextInput.h"
+
+@interface FKTokenField ()
+
+@property (nonatomic,retain) UIButton *overflowButton ;
+@property (nonatomic,assign) CGRect origFrame;
+@property (nonatomic,assign) BOOL userExpanded;
+
+@end
 
 @implementation FKTokenField
 
@@ -63,8 +71,9 @@
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
-    if (self) 
+    if (self)
     {
+        self.origFrame = self.frame ;
         [self setupInstance];
     }
     return self;
@@ -95,6 +104,7 @@
 {
     [super awakeFromNib];
     [self setupInstance];
+    self.origFrame = self.frame ;
 }
 
 - (void)setupInstance
@@ -136,6 +146,41 @@
     
     // Register for keyboard notifications (needed to get keyboard's frame)
     [self registerForKeyboardNotifications];
+    
+    //    self.overflowButton = [[ UIButton alloc ] initWithFrame:CGRectMake(0, 0, 20, 20)] ;
+    self.overflowButton = [ UIButton buttonWithType:UIButtonTypeInfoLight ] ;
+    self.overflowButton.titleLabel.text = @"*" ;
+    [ self.overflowButton addTarget:self action:@selector(toggleExpandView) forControlEvents:UIControlEventTouchUpInside] ;
+    [ self addSubview:self.overflowButton ] ;
+    [ self setNeedsLayout ] ;
+}
+
+- (void)toggleExpandView
+{
+    if( self.frame.size.height <= self.origFrame.size.height )
+    {
+        [ self expandView ] ;
+        self.userExpanded = YES ;
+    }
+    else
+    {
+        [ self collapseView ] ;
+        self.userExpanded = NO ;
+    }
+}
+
+- (void)expandView
+{
+    CGRect newFrame = self.frame ;
+    newFrame.size.height = _contentView.frame.size.height ;
+    self.frame = newFrame ;
+}
+
+- (void)collapseView
+{
+    CGRect newFrame = self.frame ;
+    newFrame.size = self.origFrame.size ;
+    self.frame = newFrame ;
 }
 
 #pragma mark -
@@ -189,7 +234,7 @@
 
 - (void)setSelectedTokenFieldCell:(FKTokenFieldCell *)selectedTokenFieldCell
 {
-    // Tokenize whatever is left in the field...    
+    // Tokenize whatever is left in the field...
     if([self.text length] > 0)
     {
         // Tokenize current text
@@ -220,6 +265,11 @@
 
 #pragma mark -
 #pragma mark Layout
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame] ;
+}
 
 - (void)setNeedsLayoutAnimated:(BOOL)needsLayoutAnimated
 {
@@ -255,7 +305,7 @@
                 offset.x = _inset.width; // reset left inset
                 offset.y += _contentView.font.lineHeight + _padding.height; // y padding
             }
-
+            
             tokenFieldCellFrame.origin.x = offset.x;
             tokenFieldCellFrame.origin.y = offset.y;
             
@@ -270,13 +320,17 @@
         contentViewFrame.origin.x = offset.x;
         contentViewFrame.origin.y = offset.y + 2; // check with cell for insets...
         contentViewFrame.size.height = offset.y + offsetTolerance ;
-     
+        
         // Update content view
         _contentView.frame = contentViewFrame;
         
         // Update selection view
         _selectionView.frame = _contentView.frame;
-    
+        
+        // Reposition the Overflow Button to the right edge
+        CGRect overflowFrame = CGRectMake(self.frame.size.width - 25, 5, 20, 20) ;
+        self.overflowButton.frame = overflowFrame ;
+        self.overflowButton.hidden = self.editing || ( contentViewFrame.size.height < self.origFrame.size.height ) ;
     }];
 }
 
@@ -288,6 +342,16 @@
     // Unselect any selected token field cell
     self.selectedTokenFieldCell = nil;
     
+    if ( editing )
+    {
+        [ self expandView ] ;
+    }
+    else if ( ! self.userExpanded )
+    {
+        // View only collapses if it was automatically expanded by the edit mode
+        [ self collapseView ] ;
+    }
+    
     // Super
     super.editing = editing;
 }
@@ -296,9 +360,9 @@
 #pragma mark FKTextField (UIKeyInput)
 
 - (void)insertText:(NSString *)text
-{    
+{
     // Check if the inserted character (text) belongs to tokenizing character set
-    if([_tokenizingCharacterSet characterIsMember:[text characterAtIndex:0]]) 
+    if([_tokenizingCharacterSet characterIsMember:[text characterAtIndex:0]])
     {
         // Check if text is not empty
         if([self.text length] > 0)
@@ -376,7 +440,7 @@
         representedObject = [self.delegate tokenField:self representedObjectForEditingDictionary:editingDictionary];
     
     NSString * editingString = [editingDictionary objectForKey:FKTokenFieldCompletionDictionaryText];
-        
+    
     return [self createTokenWithEditingString:editingString forRepresentedObject:representedObject];;
 }
 
@@ -448,8 +512,8 @@
     {
         [self.tokenFieldCells addObject:tokenFieldCell];
         [self addSubview:tokenFieldCell];
-        [self setNeedsLayout];            
-            
+        [self setNeedsLayout];
+        
         if(_delegate && [_delegate respondsToSelector:@selector(tokenField:didAddRepresentedObject:atIndex:)])
             [self.delegate tokenField:self didAddRepresentedObject:tokenFieldCell.representedObject atIndex:index];
     }
@@ -526,10 +590,10 @@
             UIView * longPressGestureHitView = [self hitTest:longPressGestureLocation withEvent:nil];
             
             self.selectedTokenFieldCell = (FKTokenFieldCell *)longPressGestureHitView;
-                
+            
             [_selectedTokenFieldCell setScaled:YES animated:YES];
             [self bringSubviewToFront:_selectedTokenFieldCell];
-                
+            
             _longPressGestureHitOffset = CGPointMake(floorf(_selectedTokenFieldCell.center.x - longPressGestureLocation.x), floorf(_selectedTokenFieldCell.center.y - longPressGestureLocation.y));
         }
             break;
@@ -557,7 +621,7 @@
 #if !__has_feature(objc_arc)
                 [_selectedTokenFieldCell retain];
 #endif
-                [_tokenFieldCells removeObject:_selectedTokenFieldCell]; 
+                [_tokenFieldCells removeObject:_selectedTokenFieldCell];
                 
                 if(index < [_tokenFieldCells count])
                     [_tokenFieldCells insertObject:_selectedTokenFieldCell atIndex:index]; // Place in the begining or middle
@@ -588,7 +652,7 @@
         default:
             break;
     }
-
+    
 }
 
 #pragma mark -
@@ -616,7 +680,7 @@
                 self.completionTimer = [NSTimer scheduledTimerWithTimeInterval:kFKTokenFieldDefaultCompletionDelay target:self selector:@selector(showCompletionView) userInfo:nil repeats:NO];
             }
         }
-        else 
+        else
         {
             [self hideCompletionView];
         }
@@ -631,10 +695,10 @@
 {
     if(_completionSuperview)
     {
-       // Save state
-       _frame = self.frame;
-       _superview = self.superview;
-       
+        // Save state
+        _frame = self.frame;
+        _superview = self.superview;
+        
         // Update input view frame
         CGRect completionInputViewFrame = [self.superview convertRect:self.frame toView:_completionSuperview];
         self.frame = completionInputViewFrame;
@@ -644,14 +708,14 @@
         const CGFloat completionlistViewVerticalOffset = completionInputViewFrame.origin.y + _contentView.frame.origin.y + _contentView.font.lineHeight + _inset.height;
         CGRect completionListViewFrame = CGRectMake(0, completionlistViewVerticalOffset, _completionSuperview.bounds.size.width, _completionSuperview.bounds.size.height - _keyboardFrame.size.height - completionInputViewHeight);
         _completionListView.frame = completionInputViewFrame;
-       
+        
         // Add to completion superview
         [_completionSuperview addSubview:self];
         [_completionSuperview addSubview:_completionListView];
         
         // Animate offset
         [self animateCompletionView];
-    }  
+    }
 }
 
 - (void)animateCompletionView
@@ -660,7 +724,7 @@
     {
         // Animation offset
         CGFloat animationVerticalOffset = -_inset.height + _contentView.font.lineHeight + _inset.height - _completionListView.frame.origin.y;
-
+        
         // Set up animation
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:kFKTokenFieldDefaultCompletionAnimationDuration];
@@ -668,7 +732,7 @@
         
         // Update frames
         CGRect endCompletionInputViewFrame = self.frame;
-        CGRect endCompletionListViewFrame = _completionListView.frame; 
+        CGRect endCompletionListViewFrame = _completionListView.frame;
         endCompletionInputViewFrame.origin.y += animationVerticalOffset;
         endCompletionListViewFrame.origin.y += animationVerticalOffset;
         self.frame = endCompletionInputViewFrame;
@@ -692,7 +756,7 @@
     if([_completionListView superview])
     {
         // Restore state
-        self.frame = _frame; 
+        self.frame = _frame;
         [_superview addSubview:self];
         
         // Remove comletion list
@@ -724,11 +788,11 @@
         static NSString * StringCompletionCellIdentifier = @"FKTokenFieldStringCompletionCell";
         
         cell = [tableView dequeueReusableCellWithIdentifier:StringCompletionCellIdentifier];
-        if (cell == nil) 
+        if (cell == nil)
         {
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:StringCompletionCellIdentifier];
             cell.accessoryType = UITableViewCellAccessoryNone;
-
+            
 #if !__has_feature(objc_arc)
             [cell autorelease];
 #endif
@@ -743,7 +807,7 @@
         static const NSUInteger SecondDetailTextLabelTag = 58839;
         
         cell = [tableView dequeueReusableCellWithIdentifier:DictionaryCompletionCellIdentifier];
-        if (cell == nil) 
+        if (cell == nil)
         {
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:DictionaryCompletionCellIdentifier];
             cell.accessoryType = UITableViewCellAccessoryNone;
@@ -785,7 +849,7 @@
         static NSString * InvalidCompletionCellIdentifier = @"FKTokenFieldInvalidCompletionCell";
         
         cell = [tableView dequeueReusableCellWithIdentifier:InvalidCompletionCellIdentifier];
-        if (cell == nil) 
+        if (cell == nil)
         {
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:InvalidCompletionCellIdentifier];
             cell.accessoryType = UITableViewCellAccessoryNone;
@@ -841,7 +905,7 @@
 
 - (void)registerForKeyboardNotifications
 {
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
 }
 
 - (void)unregisterForKeyboardNotifications
