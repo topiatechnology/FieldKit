@@ -74,7 +74,7 @@
     if (self)
     {
         self.origFrame = self.frame ;
-        [self setupInstance];
+        [self setupTokenFieldInstance];
     }
     return self;
 }
@@ -103,11 +103,11 @@
 - (void)awakeFromNib
 {
     [super awakeFromNib];
-    [self setupInstance];
+    [self setupTokenFieldInstance];
     self.origFrame = self.frame ;
 }
 
-- (void)setupInstance
+- (void)setupTokenFieldInstance
 {
     // Set up view
     self.backgroundColor = [UIColor whiteColor];
