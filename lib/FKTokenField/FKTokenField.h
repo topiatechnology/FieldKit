@@ -90,6 +90,18 @@
 @property(nonatomic, unsafe_unretained) id<FKTokenFieldDelegate> delegate;
 
 /*!
+ The image to use on the More button when it is in the collapsed state.  This image should indicate that the
+ view can be expanded to show more information.
+ */
+@property (nonatomic,retain) UIImage *expandIconImage ;
+
+/*!
+ The image to use on the More button when it is in the expanded state.  This image should indicate that the
+ view can be collapsed to show less information.
+ */
+@property (nonatomic,retain) UIImage *collapseIconImage ;
+
+/*!
  Returns the default completion delay interval in seconds
  */
 + (NSTimeInterval)defaultCompletionDelay;

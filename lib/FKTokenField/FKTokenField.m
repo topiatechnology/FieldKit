@@ -112,6 +112,8 @@
     // Set up view
     self.backgroundColor = [UIColor whiteColor];
     
+    self.clipsToBounds = YES ;
+    
     // Set up default geometry properties
     _inset = kFKTokenFieldDefaultInset;
     _padding = kFKTokenFieldDefaultPadding;
@@ -148,7 +150,8 @@
     [self registerForKeyboardNotifications];
     
     //    self.overflowButton = [[ UIButton alloc ] initWithFrame:CGRectMake(0, 0, 20, 20)] ;
-    self.overflowButton = [ UIButton buttonWithType:UIButtonTypeInfoLight ] ;
+    self.overflowButton = [ UIButton buttonWithType:UIButtonTypeCustom ] ;
+    //    self.overflowButton.imageView.image = self.expandIconImage ;
     self.overflowButton.titleLabel.text = @"*" ;
     [ self.overflowButton addTarget:self action:@selector(toggleExpandView) forControlEvents:UIControlEventTouchUpInside] ;
     [ self addSubview:self.overflowButton ] ;
@@ -161,26 +164,32 @@
     {
         [ self expandView ] ;
         self.userExpanded = YES ;
+        [ self.overflowButton setImage:self.collapseIconImage forState:UIControlStateNormal ];
     }
     else
     {
         [ self collapseView ] ;
         self.userExpanded = NO ;
+        [ self.overflowButton setImage:self.expandIconImage forState:UIControlStateNormal ];
     }
 }
 
 - (void)expandView
 {
-    CGRect newFrame = self.frame ;
-    newFrame.size.height = _contentView.frame.size.height ;
-    self.frame = newFrame ;
+    [ UIView animateWithDuration:0.25 animations:^{
+        CGRect newFrame = self.frame ;
+        newFrame.size.height = _contentView.frame.size.height ;
+        self.frame = newFrame ;
+    }] ;
 }
 
 - (void)collapseView
 {
-    CGRect newFrame = self.frame ;
-    newFrame.size = self.origFrame.size ;
-    self.frame = newFrame ;
+    [ UIView animateWithDuration:0.25 animations:^{
+        CGRect newFrame = self.frame ;
+        newFrame.size = self.origFrame.size ;
+        self.frame = newFrame ;
+    }] ;
 }
 
 #pragma mark -
@@ -317,6 +326,7 @@
             // Hide the cell if it is below the token field's frame
             tokenFieldCell.hidden = ( offset.y + tokenFieldCell.size.height > self.frame.size.height ) ;
             clippedTokens |= tokenFieldCell.hidden ;
+            tokenFieldCell.hidden = NO ;
             
             offset.x += tokenFieldCell.size.width + _padding.width; // x padding
         }
@@ -330,6 +340,8 @@
         // Update content view
         _contentView.frame = contentViewFrame;
         
+        [ self updateFrameSize ] ;
+        
         // Update selection view
         _selectionView.frame = _contentView.frame;
         
@@ -339,7 +351,30 @@
         self.overflowButton.frame = overflowFrame ;
         // Hide the button if we are editing or the view is collapsed and their are no clipped tokens.
         self.overflowButton.hidden = self.editing || ( ! self.userExpanded && ! clippedTokens ) ;
+        
+        if ( self.userExpanded )
+        {
+            [ self.overflowButton setImage:self.collapseIconImage forState:UIControlStateNormal ];
+        }
+        else
+        {
+            [ self.overflowButton setImage:self.expandIconImage forState:UIControlStateNormal ];
+        }
     }];
+}
+
+- (void)updateFrameSize
+{
+    if ( self.editing || self.userExpanded )
+    {
+        CGRect newFrame = self.frame ;
+        newFrame.size.height = _contentView.frame.size.height ;
+        self.frame = newFrame ;
+    }
+    else
+    {
+        self.frame = self.origFrame ;
+    }
 }
 
 #pragma mark -
