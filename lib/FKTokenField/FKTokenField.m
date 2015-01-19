@@ -292,6 +292,8 @@
     
     [UIView animateWithDuration:layoutAnimationDuration animations:^{
         
+        BOOL clippedTokens = NO ;
+        
         // Layout token field cells
         const CGFloat offsetTolerance = _contentView.font.lineHeight*2;
         CGPoint offset = CGPointMake(_inset.width, _inset.height); // start off with inset
@@ -312,6 +314,10 @@
             if(tokenFieldCell.isScaled == NO)
                 tokenFieldCell.frame = tokenFieldCellFrame;
             
+            // Hide the cell if it is below the token field's frame
+            tokenFieldCell.hidden = ( offset.y + tokenFieldCell.size.height > self.frame.size.height ) ;
+            clippedTokens |= tokenFieldCell.hidden ;
+            
             offset.x += tokenFieldCell.size.width + _padding.width; // x padding
         }
         
@@ -328,9 +334,11 @@
         _selectionView.frame = _contentView.frame;
         
         // Reposition the Overflow Button to the right edge
-        CGRect overflowFrame = CGRectMake(self.frame.size.width - 25, 5, 20, 20) ;
+        NSLog (@"self.frame: %@", NSStringFromCGRect(self.frame)) ;
+        CGRect overflowFrame = CGRectMake(self.bounds.size.width - 25, 5, 20, 20) ;
         self.overflowButton.frame = overflowFrame ;
-        self.overflowButton.hidden = self.editing || ( contentViewFrame.size.height < self.origFrame.size.height ) ;
+        // Hide the button if we are editing or the view is collapsed and their are no clipped tokens.
+        self.overflowButton.hidden = self.editing || ( ! self.userExpanded && ! clippedTokens ) ;
     }];
 }
 
