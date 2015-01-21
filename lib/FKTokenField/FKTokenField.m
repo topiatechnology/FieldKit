@@ -179,7 +179,7 @@
     [ UIView animateWithDuration:0.25 animations:^{
         CGRect newFrame = self.frame ;
         newFrame.size.height = _contentView.frame.size.height ;
-        self.frame = newFrame ;
+        super.frame = newFrame ;
     }] ;
 }
 
@@ -188,7 +188,7 @@
     [ UIView animateWithDuration:0.25 animations:^{
         CGRect newFrame = self.frame ;
         newFrame.size = self.origFrame.size ;
-        self.frame = newFrame ;
+        super.frame = newFrame ;
     }] ;
 }
 
@@ -277,6 +277,7 @@
 
 - (void)setFrame:(CGRect)frame
 {
+    self.origFrame = frame  ;
     [super setFrame:frame] ;
 }
 
@@ -369,11 +370,11 @@
     {
         CGRect newFrame = self.frame ;
         newFrame.size.height = _contentView.frame.size.height ;
-        self.frame = newFrame ;
+        super.frame = newFrame ;
     }
     else
     {
-        self.frame = self.origFrame ;
+        super.frame = self.origFrame ;
     }
 }
 
