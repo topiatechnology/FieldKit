@@ -223,6 +223,7 @@
     // Clean up
     [self.tokenFieldCells removeAllObjects];
     _selectedTokenFieldCell = nil;
+    _selectedIndex = NSNotFound;
     
     // Add token field cells for each represented object
     for(id representedObject in representedObjects)
@@ -265,10 +266,13 @@
     {
         _selectedTokenFieldCell.selected = YES;
         [self showSelectionView:NO];
+        
+        _selectedIndex = [self.tokenFieldCells indexOfObject:selectedTokenFieldCell] ;
     }
     else
     {
         [self showSelectionView:YES];
+        _selectedIndex = NSNotFound ;
     }
 }
 
@@ -602,6 +606,13 @@
             [self becomeFirstResponder];
         
         self.selectedTokenFieldCell = tokenFieldCell;
+        
+        if ( self.delegate && [ self.delegate respondsToSelector:@selector(tokenField:didSelectRepresentedObject:atIndex:)])
+        {
+            NSInteger selectedIndex = [ self.tokenFieldCells indexOfObject:tokenFieldCell ] ;
+            id selectedObject = [ self.representedObjects objectAtIndex:selectedIndex ];
+            [ self.delegate tokenField:self didSelectRepresentedObject:selectedObject atIndex:selectedIndex ] ;
+        }
     }
 }
 

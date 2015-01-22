@@ -155,6 +155,9 @@ static const NSString * FKTokenFieldCompletionDictionaryDetailText = @"2";
  */
 - (void)tokenField:(FKTokenField *)tokenField didRemoveRepresentedObject:(id)representedObject atIndex:(NSUInteger)index;
 
+
+- (void)tokenField:(FKTokenField *)tokenField didSelectRepresentedObject:(id)representedObject atIndex:(NSUInteger)index;
+
 /*!
  @group Pasteboard
  */

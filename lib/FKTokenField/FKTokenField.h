@@ -101,6 +101,8 @@
  */
 @property (nonatomic,retain) UIImage *collapseIconImage ;
 
+@property (nonatomic,readonly) NSInteger selectedIndex ;
+
 /*!
  Returns the default completion delay interval in seconds
  */
