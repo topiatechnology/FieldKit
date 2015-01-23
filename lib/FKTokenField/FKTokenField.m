@@ -447,8 +447,10 @@
         // Check if there's a selected cell
         if(_selectedTokenFieldCell)
         {
+            FKTokenFieldCell *cell = [ _selectedTokenFieldCell retain ];
             [self removeTokenFieldCell:_selectedTokenFieldCell];
             self.selectedTokenFieldCell = nil;
+            [ cell release] ;
         }
         else if([self.tokenFieldCells count] > 0)
         {
