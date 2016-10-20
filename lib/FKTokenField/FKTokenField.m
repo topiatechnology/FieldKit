@@ -111,9 +111,7 @@
 {
     // Set up view
     self.backgroundColor = [UIColor whiteColor];
-    
-    self.clipsToBounds = YES ;
-    
+        
     // Set up default geometry properties
     _inset = kFKTokenFieldDefaultInset;
     _padding = kFKTokenFieldDefaultPadding;
@@ -331,7 +329,6 @@
             // Hide the cell if it is below the token field's frame
             tokenFieldCell.hidden = ( offset.y + tokenFieldCell.size.height > self.frame.size.height ) ;
             clippedTokens |= tokenFieldCell.hidden ;
-            tokenFieldCell.hidden = NO ;
             
             offset.x += tokenFieldCell.size.width + _padding.width; // x padding
         }
